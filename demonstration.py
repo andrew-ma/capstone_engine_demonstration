@@ -136,9 +136,6 @@ def lite_mode(md, code: bytes, offset: int, skipto: int) -> Iterator[str]:
         
         
 def table_full_mode(md, code: bytes, offset: int, skipto: int) -> Iterator[List]:
-    '''
-    headers = ["Address", "Mnemonic", "Op String", "ID", "Size", "Bytes", "Registers Read", "Registers Written", "Groups", "Num Operands", "Op 1", "Op 2", "Flags"]
-    '''
     for i in md.disasm(CODE, offset=args.offset):
         if i.address < skipto:
             continue
@@ -301,9 +298,11 @@ if __name__ == "__main__":
     parser.add_argument('filename',type=str, help='filename to process')
     parser.add_argument('--offset', type=hex_str_or_int, default='0', help='offset to first instruction')
     parser.add_argument('--pagesize', type=int, default=4, help='how many instructions to display per page')
-    parser.add_argument('-l', action='store_true', help='show less information')
+    parser.add_argument('-lite', action='store_true', help='show less information')
     parser.add_argument('-table', action='store_true', help='show in table format')
     parser.add_argument('--skipto', type=hex_str_or_int, default=0, help='skip to this address')
+    parser.add_argument('--arch', type=str, default='CS_ARCH_X86', help='Capstone architecture')
+    parser.add_argument('--mode', type=str, default='CS_MODE_64', help='Capstone mode')
 
     args = parser.parse_args()
 
@@ -313,7 +312,7 @@ if __name__ == "__main__":
         
     
     # Capstone class(hardware architecture, hardware mode)
-    md = Cs(CS_ARCH_X86, CS_MODE_64) # x86, 64-bit mode
+    md = Cs(args.arch, args.mode) # x86, 64-bit mode
 
     # to get details like implicit registers read/written, or groups
     md.detail = True
