@@ -115,20 +115,21 @@ def hex_str_or_int(value: str) -> int:
 
 def table_lite_mode(md, code: bytes, offset: int, skipto: int) -> Iterator[List]:
     for i in md.disasm_lite(CODE, offset=args.offset):
-        if i.address < skipto:
+        (address, size, mnemonic, op_str) = i
+        
+        if address < skipto:
             continue
 
-        (address, size, mnemonic, op_str) = i
         
         yield [f"0x{address:x}", mnemonic, op_str, size]
 
 def lite_mode(md, code: bytes, offset: int, skipto: int) -> Iterator[str]:
     for i in md.disasm_lite(CODE, offset=args.offset):
-        if i.address < skipto:
-            continue
-
         (address, size, mnemonic, op_str) = i
         
+        if address < skipto:
+            continue
+
         yield f"0x{address:x}:\t{mnemonic}\t{op_str}\tSize={size}"
         
         
