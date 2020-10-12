@@ -108,7 +108,7 @@ def get_eflag_name(eflag) -> Optional[str]:
 
 
 def hex_str_or_int(value: str) -> int:
-    if value.startswith("0x"):
+    if value.startswith("0x") or value.startswith("0X"):
         return int(value, 16)
     else:
         return int(value)
