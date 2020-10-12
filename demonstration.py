@@ -299,13 +299,13 @@ def full_mode(md, code: bytes, offset: int, skipto: int) -> Iterator[str]:
 if __name__ == "__main__":
     init()  # colorama init code
 
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('filename',type=str, help='filename to process')
-    parser.add_argument('--offset', type=hex_str_or_int, default='0', help='offset to first instruction')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename',type=str, help='file to disassemble')
+    parser.add_argument('--offset', type=hex_str_or_int, default='0', help='offset for first instruction (for if address 0 in file corresponds to different address)')
     parser.add_argument('--pagesize', type=int, default=4, help='how many instructions to display per page')
-    parser.add_argument('-lite', action='store_true', help='show less information')
+    parser.add_argument('-lite', action='store_true', help='lite mode to show only address, mnemonic, operands, and size of instruction')
     parser.add_argument('-table', action='store_true', help='show in table format')
-    parser.add_argument('--skipto', type=hex_str_or_int, default=0, help='skip to this address')
+    parser.add_argument('--skipto', type=hex_str_or_int, default=0, help='skip to this address (usually should be address of .text section)')
 
     args = parser.parse_args()
 
