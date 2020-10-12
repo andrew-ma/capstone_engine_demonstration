@@ -3,13 +3,11 @@ from capstone import *
 from capstone.x86 import *
 import os
 import sys
-import getpass
 import argparse
 from colorama import init
 from termcolor import colored
 from tabulate import tabulate
 from typing import *
-
 
 
 def get_eflag_name(eflag) -> Optional[str]:
@@ -301,8 +299,6 @@ if __name__ == "__main__":
     parser.add_argument('-lite', action='store_true', help='show less information')
     parser.add_argument('-table', action='store_true', help='show in table format')
     parser.add_argument('--skipto', type=hex_str_or_int, default=0, help='skip to this address')
-    parser.add_argument('--arch', type=str, default='CS_ARCH_X86', help='Capstone architecture')
-    parser.add_argument('--mode', type=str, default='CS_MODE_64', help='Capstone mode')
 
     args = parser.parse_args()
 
@@ -312,7 +308,7 @@ if __name__ == "__main__":
         
     
     # Capstone class(hardware architecture, hardware mode)
-    md = Cs(args.arch, args.mode) # x86, 64-bit mode
+    md = Cs(CS_ARCH_X86, CS_MODE_64) # x86, 64-bit mode
 
     # to get details like implicit registers read/written, or groups
     md.detail = True
@@ -320,7 +316,7 @@ if __name__ == "__main__":
     # skipdata to not stop on broken instruction
     md.skipdata = True
 
-    if args.l:
+    if args.lite:
         # if we don't want full instruction info in CsInsn, we can use disasm_lite() which is faster
         # and it returns Tuple[address, size, mnemonic, op_str]
         if args.table:
@@ -358,7 +354,7 @@ if __name__ == "__main__":
         if quit:
             break
         
-        x = getpass.getpass('-- More --')
+        x = input('-- More --')
         while True:
             x = x.strip()
             if x == 'q':
@@ -367,5 +363,30 @@ if __name__ == "__main__":
             elif not x:
                 # new line or space
                 break
+            else:
+                try:
+                    goto_address = hex_str_or_int(x)
+                    
+                    # Restart generation
+                    if args.lite:
+                        # if we don't want full instruction info in CsInsn, we can use disasm_lite() which is faster
+                        # and it returns Tuple[address, size, mnemonic, op_str]
+                        if args.table:
+                            headers = ["Address", "Mnemonic", "Op String", "Size"]
+                            text_it = table_lite_mode(md, CODE, args.offset, goto_address)
+                        else:
+                            text_it = lite_mode(md, CODE, args.offset, goto_address)
+                    else:
+                        
+                        if args.table:
+                            headers = ["Address", "Mnemonic", "Op String", "ID", "Size", "Bytes", "Reg Read", "Reg Write", "Groups", "# Op", "Op 1", "Op 2", "Flags"]
+                            text_it = table_full_mode(md, CODE, args.offset, goto_address)
+                        else:
+                            text_it = full_mode(md, CODE, args.offset, goto_address)
+                            
+                    break
+                except Exception:
+                    pass
                 
-            x = getpass.getpass('')
+            # until we get valid input, don't display next page
+            x = input('')
