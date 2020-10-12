@@ -122,7 +122,7 @@ def table_lite_mode(md, code: bytes, offset: int, skipto: int) -> Iterator[List]
 
         
         address_str = f"0x{address:x}"
-        yield [colored(address_str, "green"), mnemonic, op_str, size]
+        yield [colored(address_str, "green"), colored( mnemonic, 'white', 'on_blue' ), colored(op_str, 'cyan'), size]
 
 def lite_mode(md, code: bytes, offset: int, skipto: int) -> Iterator[str]:
     for i in md.disasm_lite(CODE, offset=args.offset):
@@ -132,7 +132,7 @@ def lite_mode(md, code: bytes, offset: int, skipto: int) -> Iterator[str]:
             continue
 
         address_str = f"0x{address:x}"
-        yield f"{colored(address_str, 'green')}:\t{mnemonic}\t{op_str}\tSize={size}"
+        yield f"{colored(address_str, 'green')}:\t{colored( mnemonic , 'white', 'on_blue')}\t{colored( op_str , 'cyan')}\t\tSize={size}"
         
         
         
