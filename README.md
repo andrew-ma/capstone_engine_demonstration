@@ -26,3 +26,7 @@ optional arguments:
   -table               show in table format
   --skipto SKIPTO      skip to this address (usually should be address of .text section)h
 ```
+
+## Usage
+* type in address (integer '938' or hex '0x3AA') to go to that address
+* type in 'q' to quit
