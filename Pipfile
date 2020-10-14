@@ -11,6 +11,7 @@ colorama = "*"
 termcolor = "*"
 tabulate = "*"
 rope = "*"
+pyelftools = "*"
 
 [requires]
 python_version = "3.8"
