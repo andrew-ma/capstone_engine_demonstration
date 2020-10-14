@@ -9,6 +9,7 @@ from colorama import init
 from termcolor import colored
 from tabulate import tabulate
 from typing import *
+import re
 
 
 def get_eflag_name(eflag) -> Optional[str]:
@@ -356,6 +357,10 @@ if __name__ == "__main__":
         else:
             text_it = full_mode(md, CODE, args.offset, args.skipto)
     
+    jump_pattern = re.compile(r'j([0-9]+)')
+    color_seq_pattern = re.compile(r'\x1b[^m]*m')
+    
+    jmp_stack = []
     
     # page through the text items until we reach StopIteration
     quit = False
@@ -389,6 +394,73 @@ if __name__ == "__main__":
             if x == 'q':
                 quit = True
                 break
+            elif x == 'b':
+                if jmp_stack: # any addresses to jump to
+                    last_jumped = jmp_stack[-1]
+                
+                    try:
+                        goto_address = last_jumped
+                        
+                        # Restart generation
+                        if args.lite:
+                            # if we don't want full instruction info in CsInsn, we can use disasm_lite() which is faster
+                            # and it returns Tuple[address, size, mnemonic, op_str]
+                            if args.table:
+                                headers = ["Address", "Mnemonic", "Op String", "Size"]
+                                text_it = table_lite_mode(md, CODE, args.offset, goto_address)
+                            else:
+                                text_it = lite_mode(md, CODE, args.offset, goto_address)
+                        else:
+                            
+                            if args.table:
+                                headers = ["Address", "Mnemonic", "Op String", "ID", "Size", "Bytes", "Reg Read", "Reg Write", "Groups", "# Op", "Op 1", "Op 2", "Flags"]
+                                text_it = table_full_mode(md, CODE, args.offset, goto_address)
+                            else:
+                                text_it = full_mode(md, CODE, args.offset, goto_address)
+                            
+                        jmp_stack.pop() # remove just jumped to address    
+                        break
+                    except Exception:
+                        pass
+                
+            elif x.startswith('j'):
+                match_obj = jump_pattern.match(x)
+                
+                if match_obj:
+                    idx = int(match_obj.group(1))
+                    if idx >= 0 and idx < len(cur_page):
+                        groups = color_seq_pattern.sub('', cur_page[idx][8]) # remove color sequences from groups
+                        
+                        if "jump" in groups:
+                            jmp_dest = color_seq_pattern.sub('', cur_page[idx][2])
+                        
+                            try:
+                                goto_address = hex_str_or_int(jmp_dest)
+                                
+                                # current page's address
+                                cur_address = hex_str_or_int( color_seq_pattern.sub('', cur_page[idx][0]) )
+                                jmp_stack.append(cur_address)
+                                
+                                # Restart generation
+                                if args.lite:
+                                    # if we don't want full instruction info in CsInsn, we can use disasm_lite() which is faster
+                                    # and it returns Tuple[address, size, mnemonic, op_str]
+                                    if args.table:
+                                        headers = ["Address", "Mnemonic", "Op String", "Size"]
+                                        text_it = table_lite_mode(md, CODE, args.offset, goto_address)
+                                    else:
+                                        text_it = lite_mode(md, CODE, args.offset, goto_address)
+                                else:
+                                    
+                                    if args.table:
+                                        headers = ["Address", "Mnemonic", "Op String", "ID", "Size", "Bytes", "Reg Read", "Reg Write", "Groups", "# Op", "Op 1", "Op 2", "Flags"]
+                                        text_it = table_full_mode(md, CODE, args.offset, goto_address)
+                                    else:
+                                        text_it = full_mode(md, CODE, args.offset, goto_address)
+                                        
+                                break
+                            except Exception:
+                                pass
             elif not x:
                 # new line or space
                 break

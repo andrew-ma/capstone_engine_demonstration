@@ -30,3 +30,8 @@ optional arguments:
 ## Usage
 * type in address (integer '938' or hex '0x3AA') to go to that address
 * type in 'q' to quit
+* type in 'j{rowidx}' to try to jump to the jmp location (currently only works on rows that are in "jump" group and that have an address as operand so jmp rax won't work)
+* type in 'b' if you have use 'j{rowidx}' and it will return you to previous address
+
+
+### Note: Radare2, REMnux, and Cuckoo use Capstone
