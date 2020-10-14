@@ -1,6 +1,7 @@
 import capstone
 from capstone import *
 from capstone.x86 import *
+from elftools.elf.elffile import ELFFile
 import os
 import sys
 import argparse
@@ -305,15 +306,29 @@ if __name__ == "__main__":
     parser.add_argument('--pagesize', type=int, default=4, help='how many instructions to display per page')
     parser.add_argument('-lite', action='store_true', help='lite mode to show only address, mnemonic, operands, and size of instruction')
     parser.add_argument('-table', action='store_true', help='show in table format')
+    parser.add_argument('-allsections', action='store_true', help='show in table format')
     parser.add_argument('--skipto', type=hex_str_or_int, default=0, help='skip to this address (usually should be address of .text section)')
 
     args = parser.parse_args()
-
+    
     
     with open(args.filename, 'rb') as f:
-        CODE = f.read()
-        
+        if args.allsections:
+            CODE = f.read()
+        else:
+            elf = ELFFile(f)
+            text_section = elf.get_section_by_name('.text')
+            
+            if text_section is None:
+                CODE = f.read()
+            else:
+                text_section_bytes = text_section.data()
+                text_section_addr = text_section['sh_addr']
+                
+                args.offset = text_section_addr # set the offset to text_section_addr because we are only loading in .text section
+                CODE = text_section_bytes
     
+
     # Capstone class(hardware architecture, hardware mode)
     md = Cs(CS_ARCH_X86, CS_MODE_64) # x86, 64-bit mode
 
@@ -322,6 +337,8 @@ if __name__ == "__main__":
 
     # skipdata to not stop on broken instruction
     md.skipdata = True
+    
+    cached_addresses = {}
 
     if args.lite:
         # if we don't want full instruction info in CsInsn, we can use disasm_lite() which is faster
@@ -344,14 +361,19 @@ if __name__ == "__main__":
     quit = False
     while not quit:
         cur_page = []
-        for p in range(args.pagesize):
-            try:
-                item = next(text_it)
+        
+        if args.pagesize == 0:
+            cur_page = list(text_it)
+            quit = True
+        else:
+            for p in range(args.pagesize):
+                try:
+                    item = next(text_it)
 
-                cur_page.append(item)
-            except StopIteration:
-                quit = True
-                break
+                    cur_page.append(item)
+                except StopIteration:
+                    quit = True
+                    break
             
         if args.table:
             print(tabulate(cur_page, headers=headers, tablefmt="fancy_grid"))
